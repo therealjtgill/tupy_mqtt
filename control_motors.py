@@ -27,9 +27,9 @@ class MotorController:
       self.m2_pwm.ChangeDutyCycle(duty_cycle)
 
    def go_forward(self, exec_time):
-      exec_time = max(exec_time, self.max_time)
+      exec_time = min(exec_time, self.max_time)
       sleep_time = 0.1
-      num_loops = int(exec_time/sleep_time)
+      num_loops = int(10*exec_time)
       print("num loops:", num_loops)
       GPIO.output(self.m1_pins["forward"], GPIO.LOW)
       GPIO.output(self.m1_pins["backward"], GPIO.HIGH)
@@ -41,9 +41,9 @@ class MotorController:
       self.pulse_pwm(0)
 
    def go_backward(self, exec_time):
-      exec_time = max(exec_time, self.max_time)
+      exec_time = min(exec_time, self.max_time)
       sleep_time = 0.1
-      num_loops = int(exec_time/sleep_time)
+      num_loops = int(10*exec_time)
       GPIO.output(self.m1_pins["forward"], GPIO.HIGH)
       GPIO.output(self.m1_pins["backward"], GPIO.LOW)
       GPIO.output(self.m2_pins["forward"], GPIO.HIGH)
@@ -54,9 +54,9 @@ class MotorController:
       self.pulse_pwm(0)
 
    def turn_right(self, exec_time):
-      exec_time = max(exec_time, self.max_time)
+      exec_time = min(exec_time, self.max_time)
       sleep_time = 0.1
-      num_loops = int(exec_time/sleep_time)
+      num_loops = int(10*exec_time)
       GPIO.output(self.m1_pins["forward"], GPIO.HIGH)
       GPIO.output(self.m1_pins["backward"], GPIO.LOW)
       GPIO.output(self.m2_pins["forward"], GPIO.LOW)
@@ -67,9 +67,9 @@ class MotorController:
       self.pulse_pwm(0)
 
    def turn_left(self, exec_time):
-      exec_time = max(exec_time, self.max_time)
+      exec_time = min(exec_time, self.max_time)
       sleep_time = 0.1
-      num_loops = int(exec_time/sleep_time)
+      num_loops = int(10*exec_time)
       GPIO.output(self.m1_pins["forward"], GPIO.LOW)
       GPIO.output(self.m1_pins["backward"], GPIO.HIGH)
       GPIO.output(self.m2_pins["forward"], GPIO.HIGH)
