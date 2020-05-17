@@ -1,10 +1,11 @@
 from control_motors import MotorController
 import json
+import multiprocessing
 import paho.mqtt.client as mqtt
 import time
 
 class Receiver:
-   def __init__(self, mc):
+   def __init__(self, out_queue):
       self.message_wait_time = 15
       self.last_rx_time = time.time() - 15
 
@@ -13,8 +14,6 @@ class Receiver:
       self.client.connect(self.client_name, 1883)
       self.client.subscribe("tupyrobot/command")
       self.client.on_message = self.on_message
-
-      self.mc = mc
 
    def on_message(self, client, userdata, message):
       print("Received message")
@@ -29,6 +28,35 @@ class Receiver:
       if time_remaining >= 0:
          print("Executing message")
          self.last_rx_time = time.time()
+         out_queue.put(msg)
+         
+   def start(self):
+      self.client.loop_forever()
+
+def mqtt_proces(out_queue):
+
+   receiver = Receiver(out_queue)
+   receiver.start()
+
+def robot_process(in_queue):
+   m1_pins = {
+      "forward": 6,
+      "backward": 12,
+      "pwm": 18
+   }
+
+   m2_pins = {
+      "forward": 19,
+      "backward": 16,
+      "pwm": 17
+   }
+
+   mc = MotorController(m1_pins, m2_pins, 10)
+
+   while True:
+      if not in_queue.empty():
+         msg = in_queue.get()
+
          try:
             commands = json.loads(msg)
             # Only keep the first 4 commands.
@@ -45,26 +73,19 @@ class Receiver:
                   self.mc.turn_left(cmd[1])
          except Exception as e:
             print("Error occurred attempting to parse message,", str(e))
-         
-   def start(self):
-      self.client.loop_forever()
 
 if __name__ == "__main__":
-   m1_pins = {
-      "forward": 6,
-      "backward": 12,
-      "pwm": 18
-   }
+   work_queue = multiprocessing.SimpleQueue()
 
-   m2_pins = {
-      "forward": 19,
-      "backward": 16,
-      "pwm": 17
-   }
+   j1 = multiprocessing.Process(
+      target=mqtt_process,
+      args=(work_queue,)
+   )
+   j2 = multiprocessing.Process(
+      target=robot_process,
+      args=(work_queue,)
+   )
+   jobs = [j1, j2]
 
-   mc = MotorController(m1_pins, m2_pins, 10)
-
-   #mc.go_forward(1.5)
-
-   receiver = Receiver(mc)
-   receiver.client.loop_forever()
+   for j in jobs:
+      j.start()
