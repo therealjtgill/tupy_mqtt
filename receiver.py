@@ -12,8 +12,8 @@ def on_message(client, userdata, message):
 
 def main(argv):
    client = mqtt.Client()
-   client.connect("test.mosquitto.org", 1883)
-   client.subscribe("tupytest/from_sender")
+   client.connect("ec2-18-217-139-14.us-east-2.compute.amazonaws.com", 1883)
+   client.subscribe("tupytest/msgs")
    client.on_message = on_message
 
    client.loop_forever()

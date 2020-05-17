@@ -8,6 +8,8 @@ class MotorController:
       self.m1_pins = m1_pins
       self.m2_pins = m2_pins
 
+      GPIO.setmode(GPIO.BCM)
+
       for _, pin in self.m1_pins.items():
          GPIO.setup(pin, GPIO.OUT)
 
@@ -28,6 +30,7 @@ class MotorController:
       exec_time = max(exec_time, self.max_time)
       sleep_time = 0.1
       num_loops = int(exec_time/sleep_time)
+      print("num loops:", num_loops)
       GPIO.output(self.m1_pins["forward"], GPIO.LOW)
       GPIO.output(self.m1_pins["backward"], GPIO.HIGH)
       GPIO.output(self.m2_pins["forward"], GPIO.LOW)
@@ -35,6 +38,7 @@ class MotorController:
       for i in range(num_loops):
          self.pulse_pwm()
          time.sleep(0.1)
+      self.pulse_pwm(0)
 
    def go_backward(self, exec_time):
       exec_time = max(exec_time, self.max_time)
@@ -47,6 +51,7 @@ class MotorController:
       for i in range(num_loops):
          self.pulse_pwm()
          time.sleep(0.1)
+      self.pulse_pwm(0)
 
    def turn_right(self, exec_time):
       exec_time = max(exec_time, self.max_time)
@@ -59,6 +64,7 @@ class MotorController:
       for i in range(num_loops):
          self.pulse_pwm()
          time.sleep(0.1)
+      self.pulse_pwm(0)
 
    def turn_left(self, exec_time):
       exec_time = max(exec_time, self.max_time)
@@ -71,69 +77,26 @@ class MotorController:
       for i in range(num_loops):
          self.pulse_pwm()
          time.sleep(0.1)
+      self.pulse_pwm(0)
 
-m1_pins = {
-   "forward": 6,
-   "backward": 12,
-   "pwm": 18
-}
+if __name__ == "__main__":
 
-m2_pins = {
-   "forward": 19,
-   "backward": 16,
-   "pwm": 17
-}
+   m1_pins = {
+      "forward": 6,
+      "backward": 12,
+      "pwm": 18
+   }
 
-m1_forward  = 6
-m1_backward = 12
-m1_pwm_pin  = 18
+   m2_pins = {
+      "forward": 19,
+      "backward": 16,
+      "pwm": 17
+   }
 
-m2_forward  = 19
-m2_backward = 16
-m2_pwm_pin  = 17
+   mc = MotorController(m1_pins, m2_pins)
+   mc.go_forward(1.5)
+   mc.go_backward(1.5)
+   mc.turn_right(1.5)
+   mc.turn_left(1.5)
 
-#GPIO.setmode(GPIO.BOARD)
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(m1_forward, GPIO.OUT)
-GPIO.setup(m1_backward, GPIO.OUT)
-GPIO.setup(m1_pwm_pin, GPIO.OUT)
-
-GPIO.setup(m2_forward, GPIO.OUT)
-GPIO.setup(m2_backward, GPIO.OUT)
-GPIO.setup(m2_pwm_pin, GPIO.OUT)
-
-m1_pi_pwm = GPIO.PWM(m1_pwm_pin, 100)
-m1_pi_pwm.start(0)
-
-m2_pi_pwm = GPIO.PWM(m2_pwm_pin, 100)
-m2_pi_pwm.start(0)
-
-print("moving the motors yaaaasss")
-
-time.sleep(0.1)
-
-#for _ in range(50):
-#   GPIO.output(m1_forward, GPIO.LOW)
-#   GPIO.output(m1_backward, GPIO.HIGH)
-#   GPIO.output(m2_forward, GPIO.LOW)
-#   GPIO.output(m2_backward, GPIO.HIGH)
-#   m1_pi_pwm.ChangeDutyCycle(75)
-#   m2_pi_pwm.ChangeDutyCycle(75)
-#   time.sleep(0.1)
-#print("Changing directions")
-#for _ in range(50):
-#   GPIO.output(m1_forward, GPIO.HIGH)
-#   GPIO.output(m1_backward, GPIO.LOW)
-#   GPIO.output(m2_forward, GPIO.HIGH)
-#   GPIO.output(m2_backward, GPIO.LOW)
-#   m1_pi_pwm.ChangeDutyCycle(75)
-#   m2_pi_pwm.ChangeDutyCycle(75)
-#   time.sleep(0.1)
-
-mc = MotorController(m1_pins, m2_pins)
-mc.go_forward(1.5)
-mc.go_backward(1.5)
-mc.turn_right(1.5)
-mc.turn_left(1.5)
-
-GPIO.cleanup()
+   GPIO.cleanup()
