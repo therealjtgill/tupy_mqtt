@@ -9,6 +9,8 @@ class Receiver:
       self.message_wait_time = 15
       self.last_rx_time = time.time() - 15
 
+      self.out_queue = out_queue
+
       self.client_name = "ec2-18-217-139-14.us-east-2.compute.amazonaws.com"
       self.client = mqtt.Client()
       self.client.connect(self.client_name, 1883)
@@ -28,17 +30,18 @@ class Receiver:
       if time_remaining >= 0:
          print("Executing message")
          self.last_rx_time = time.time()
-         out_queue.put(msg)
+         self.out_queue.put(msg)
          
    def start(self):
       self.client.loop_forever()
 
-def mqtt_proces(out_queue):
-
+def mqtt_process(out_queue):
+   print("Starting MQTT process")
    receiver = Receiver(out_queue)
-   receiver.start()
+   receiver.client.loop_forever()
 
 def robot_process(in_queue):
+   print("Starting robot process")
    m1_pins = {
       "forward": 6,
       "backward": 12,
@@ -64,13 +67,13 @@ def robot_process(in_queue):
             for cmd in commands:
                print("Command: ", cmd[0], "Execution time:", cmd[1])
                if "forward" in str(cmd[0]).lower():
-                  self.mc.go_forward(cmd[1])
+                  mc.go_forward(cmd[1])
                elif "backward" in str(cmd[0]).lower():
-                  self.mc.go_backward(cmd[1])
+                  mc.go_backward(cmd[1])
                elif "right" in str(cmd[0]).lower():
-                  self.mc.turn_right(cmd[1])
+                  mc.turn_right(cmd[1])
                elif "left" in str(cmd[0]).lower():
-                  self.mc.turn_left(cmd[1])
+                  mc.turn_left(cmd[1])
          except Exception as e:
             print("Error occurred attempting to parse message,", str(e))
 
@@ -89,3 +92,4 @@ if __name__ == "__main__":
 
    for j in jobs:
       j.start()
+
