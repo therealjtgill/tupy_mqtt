@@ -9,12 +9,14 @@ class Receiver:
       self.message_wait_time = 15
       self.last_rx_time = time.time() - 15
 
+      self.command_topic = "tupyrobot/command"
+      self.response_topic = "tupyrobot/response"
       self.out_queue = out_queue
 
       self.client_name = "ec2-18-217-139-14.us-east-2.compute.amazonaws.com"
       self.client = mqtt.Client()
       self.client.connect(self.client_name, 1883)
-      self.client.subscribe("tupyrobot/command")
+      self.client.subscribe(self.command_topic)
       self.client.on_message = self.on_message
 
    def on_message(self, client, userdata, message):
@@ -25,12 +27,28 @@ class Receiver:
          time.time() - (self.last_rx_time + self.message_wait_time),
          0
       )
-      print(time_remaining, "seconds remaining")
-      #if (self.last_rx_time + self.message_wait_time) <= time.time():
+      print(-1.0*time_remaining, "seconds remaining")
+      if time_remaining < 0:
+         response = str(-1.*time_remaining) + 
+                    " seconds before new commands are accepted"
+         self.client.publish(self.response_topic, response)
       if time_remaining >= 0:
          print("Executing message")
-         self.last_rx_time = time.time()
-         self.out_queue.put(msg)
+         try:
+            msg_dict = json.loads(msg)
+            self.last_rx_time = time.time()
+            command = msg_dict["command"]
+            self.out_queue.put(command)
+            sender_name = msg_dict["user"]
+            self.client.publish(
+               self.response_topic,
+               "Executing command from " + str(sender_name) + "!"
+            )
+         except Exception as e:
+            self.client.publish(
+               self.response_topic,
+               msg + "; " + str(e)
+            )
          
    def start(self):
       self.client.loop_forever()
@@ -54,7 +72,7 @@ def robot_process(in_queue):
       "pwm": 17
    }
 
-   mc = MotorController(m1_pins, m2_pins, 10)
+   mc = MotorController(m1_pins, m2_pins, 5)
 
    while True:
       if not in_queue.empty():
@@ -62,8 +80,8 @@ def robot_process(in_queue):
 
          try:
             commands = json.loads(msg)
-            # Only keep the first 4 commands.
-            commands = commands[0:5]
+            # Only keep the first 3 commands.
+            commands = commands[0:4]
             for cmd in commands:
                print("Command: ", cmd[0], "Execution time:", cmd[1])
                if "forward" in str(cmd[0]).lower():
